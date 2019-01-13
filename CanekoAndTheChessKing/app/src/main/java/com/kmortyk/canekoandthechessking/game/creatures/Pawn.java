@@ -2,9 +2,7 @@ package com.kmortyk.canekoandthechessking.game.creatures;
 
 import android.graphics.Bitmap;
 import com.kmortyk.canekoandthechessking.game.GameWorld;
-import com.kmortyk.canekoandthechessking.game.effects.PopUpText;
 import com.kmortyk.canekoandthechessking.game.object.PathNode;
-import com.kmortyk.canekoandthechessking.game.steps.Step;
 
 import java.util.LinkedList;
 
@@ -17,12 +15,12 @@ public class Pawn extends Enemy {
         LinkedList<PathNode> nodes = new LinkedList<>();
 
         int i = node.i, j = node.j;
-        int spaces = gameWorld.hasSpaces() ? 2 : 1;
+        int steps = 1 + gameWorld.getSpaces();
 
-        checkNode(i+spaces, j, nodes);
-        checkNode(i-spaces, j, nodes);
-        checkNode(i, j+spaces, nodes);
-        checkNode(i, j-spaces, nodes);
+        checkNode(i+steps, j, nodes);
+        checkNode(i-steps, j, nodes);
+        checkNode(i, j+steps, nodes);
+        checkNode(i, j-steps, nodes);
 
         return nodes;
     }

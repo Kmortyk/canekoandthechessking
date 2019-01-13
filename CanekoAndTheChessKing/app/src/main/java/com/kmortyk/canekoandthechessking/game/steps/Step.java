@@ -1,11 +1,10 @@
 package com.kmortyk.canekoandthechessking.game.steps;
 
 import android.graphics.Bitmap;
-import android.graphics.RectF;
 import android.support.annotation.NonNull;
 
-import com.kmortyk.canekoandthechessking.resources.GameResources;
 import com.kmortyk.canekoandthechessking.game.creatures.Creature;
+import com.kmortyk.canekoandthechessking.game.item.GameItem;
 import com.kmortyk.canekoandthechessking.game.math.Vector2;
 import com.kmortyk.canekoandthechessking.game.object.GameObject;
 
@@ -20,32 +19,68 @@ public class Step extends GameObject {
     protected int flags;
 
     /**
-     * Hero or enemy todo npc?
+     * Item or creature
      */
-    private Creature creature = null;
-
-    /**
-     * For derived classes
-     */
-    protected Step() { }
+    private GameObject curObject = null;
 
     public Step(int flags, @NonNull Bitmap texture, int i, int j) {
         super(new Vector2(), texture);
         this.flags = flags;
 
         moveTo(i, j);
-        if(!isTouchable()) {
-            this.bounds.set(0, 0, 0, 0);
-        }
+        scaleBounds(1, 2); // for game control convenience
+
+        if(!isTouchable()) { setZeroBounds(); }
     }
 
     /**
      * Data constructor
      */
     public Step(int flags, Bitmap texture) {
-        this.texture = texture;
+        super(texture);
         this.flags = flags;
     }
+
+    public void onStep(Creature creature) { /* Override */ }
+
+    public Step clone(int i, int j, float offsetFactorX, float offsetFactorY) {
+        Step step = clone(i, j);
+        step.offset(texture.getWidth()*offsetFactorX, -texture.getHeight()*offsetFactorY);
+        return step;
+    }
+
+    public Step clone(int i, int j) { return new Step(flags, texture, i, j); }
+
+    /* --- current object -------------------------------------------------------------------------*/
+
+    public final boolean isEmpty() { return curObject == null; }
+
+    // set
+
+    public final void setCurrentObject(GameObject curObject) { this.curObject = curObject; }
+
+    public final void setEmpty() { curObject = null; }
+
+
+    // has smth
+
+    public final boolean  hasCreature() { return curObject instanceof Creature; }
+
+    public final boolean  hasItem()     { return curObject instanceof GameItem; }
+
+    // get
+
+    public final GameObject getObject()   { return            curObject; }
+
+    public final Creature   getCreature() { return (Creature) curObject; }
+
+    public final GameItem   getItem()     { return (GameItem) curObject; }
+
+    /* --- flags ----------------------------------------------------------------------------------*/
+
+    public final boolean isStepable()  { return (flags & IS_STEPABLE)  != 0; }
+
+    public final boolean isTouchable() { return (flags & IS_TOUCHABLE) != 0; }
 
     public static int getFlags(boolean isStepable, boolean isTouchable) {
         int flags = 0;
@@ -55,25 +90,5 @@ public class Step extends GameObject {
 
         return flags;
     }
-
-    public void onStep(Creature creature) { /* Override */ }
-
-    public Step clone(int i, int j) { return new Step(flags, texture, i, j); }
-
-    /* --- creature -------------------------------------------------------------------------------*/
-
-    public final Creature getCreature() { return creature; }
-
-    public final boolean isEmpty() { return creature == null; }
-
-    public final void setCreature(Creature creature) { this.creature = creature; }
-
-    public final void unsetCreature() { this.creature = null; }
-
-    /* --- flags ----------------------------------------------------------------------------------*/
-
-    public final boolean isStepable()  { return (flags & IS_STEPABLE)  != 0; }
-
-    public final boolean isTouchable() { return (flags & IS_TOUCHABLE) != 0; }
 
 }

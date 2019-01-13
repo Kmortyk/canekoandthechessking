@@ -26,7 +26,7 @@ public class Bishop extends Enemy  {
         j += o;
 
         if(gameWorld.isValid(i, j)) { addPathNode(i, j); }
-        //else nextStep(); // FIXME recursion
+        //else nextStep();
     }*/
 
 

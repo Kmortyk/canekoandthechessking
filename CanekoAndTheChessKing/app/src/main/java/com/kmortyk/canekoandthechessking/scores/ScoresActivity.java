@@ -9,7 +9,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.Window;
 import android.view.WindowManager;
 
-import com.kmortyk.canekoandthechessking.AppView;
 import com.kmortyk.canekoandthechessking.R;
 import com.kmortyk.canekoandthechessking.scores.database.Scores;
 

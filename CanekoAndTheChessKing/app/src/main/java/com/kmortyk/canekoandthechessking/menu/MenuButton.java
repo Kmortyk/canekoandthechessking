@@ -9,32 +9,25 @@ public class MenuButton {
 
     private TextView textView;
 
-    public MenuButton(final TextView textView, final MenuClickable menuClickable) {
+    public MenuButton(final TextView textView, final Runnable onTouch) {
         this.textView = textView;
 
         final AlphaAnimation fadeOut = new AlphaAnimation(1.0f, 0.1f);
         fadeOut.setDuration(200);
         fadeOut.setFillAfter(true);
 
-        textView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        textView.setOnClickListener(v -> {
+            fadeOut.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) { }
 
-                fadeOut.setAnimationListener(new Animation.AnimationListener() {
-                    @Override
-                    public void onAnimationStart(Animation animation) { }
+                @Override
+                public void onAnimationEnd(Animation animation) { onTouch.run(); }
 
-                    @Override
-                    public void onAnimationEnd(Animation animation) {
-                        menuClickable.onAnimationEnd();
-                    }
-
-                    @Override
-                    public void onAnimationRepeat(Animation animation) { }
-                });
-                textView.startAnimation(fadeOut);
-
-            }
+                @Override
+                public void onAnimationRepeat(Animation animation) { }
+            });
+            textView.startAnimation(fadeOut);
         });
 
     }

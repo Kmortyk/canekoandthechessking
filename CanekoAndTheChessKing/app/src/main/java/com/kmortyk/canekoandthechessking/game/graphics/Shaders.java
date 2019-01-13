@@ -19,4 +19,11 @@ public class Shaders {
                 Shader.TileMode.CLAMP);
     }
 
+    public static Shader getStartLogoGradient(float width, float height) {
+        return new LinearGradient(0, 0, width, height,
+                Color.parseColor("#B1ADAC"),
+                Color.parseColor("#A59F9F"),
+                Shader.TileMode.CLAMP);
+    }
+
 }

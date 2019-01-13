@@ -1,7 +1,6 @@
 package com.kmortyk.canekoandthechessking.game.creatures;
 
 import android.graphics.Bitmap;
-import android.graphics.Rect;
 import android.support.annotation.NonNull;
 
 import com.kmortyk.canekoandthechessking.resources.GameResources;
@@ -15,9 +14,9 @@ import java.util.LinkedList;
 
 public abstract class Creature extends GameObject {
 
-    GameWorld gameWorld;
-    LinkedList<PathNode> path;
-    LinkedList<PathNode> traveledPath;
+    protected LinkedList<PathNode> traveledPath;
+    protected LinkedList<PathNode> path;
+    protected GameWorld gameWorld;
 
     public PathNode node;
     private boolean isArrived;
@@ -25,10 +24,9 @@ public abstract class Creature extends GameObject {
     private final static float movingSpeed = 0.16f;
     private final static float err = 3f;
 
-    Creature(GameWorld gameWorld, int i, int j, Bitmap texture) {
+    public Creature(GameWorld gameWorld, int i, int j, Bitmap texture) {
+        super(texture);
         this.gameWorld = gameWorld;
-        this.texture = texture;
-        this.bounds = new Rect(0, 0, texture.getWidth(), texture.getHeight());
 
         path = new LinkedList<>();
         traveledPath = new LinkedList<>();
@@ -45,10 +43,12 @@ public abstract class Creature extends GameObject {
         this.pos = Vector2.toIsometric(new Vector2(x, y));
 
         // centering
-        pos.x -= (texture.getWidth() - GameResources.getStepWidth()) / 2;
-        pos.y -= (texture.getHeight() - GameResources.getStepHeight());
+        pos.x -= (getWidth() - GameResources.getStepWidth()) / 2;
+        pos.y -= (getHeight() - GameResources.getStepHeight());
 
         node = new PathNode(centerX(), bottomY(), i, j);
+
+        setArrived(true);
 
     }
 
@@ -78,15 +78,14 @@ public abstract class Creature extends GameObject {
         if(cy < node.y) this.pos.y += speed;
         if(cy > node.y) this.pos.y -= speed;
 
-        // Log.d("Distance", Vector2.distance2(cx, cy, node.x, node.y) + "");
+        // Log.d("Distance", Vector2.dst2(cx, cy, node.x, node.y) + "");
 
-        if(Vector2.distance2(cx, cy, node.x, node.y) < err*err) {
+        if(Vector2.dst2(cx, cy, node.x, node.y) < err*err) {
 
             Step step = gameWorld.get(node.i, node.j);
-            if(step != null) {
-                step.onStep(this);
-                if(!step.isEmpty()) { onAttack(step.getCreature()); }
-            }
+            step.onStep(this);
+
+            if(step.hasCreature()) { onAttack(step.getCreature()); }
 
             onArrived();
 
@@ -100,9 +99,9 @@ public abstract class Creature extends GameObject {
 
     public final void addAllPathNodes(LinkedList<PathNode> nodes) { for (PathNode node: nodes) addPathNode(node); }
 
-    void onAttack(Creature creature) { }
+    protected void onAttack(Creature creature) { /* Override */ }
 
-    void onArrived() {
+    protected void onArrived() {
         gameWorld.move(this, traveledPath.peekLast(), node);
         traveledPath.add(node);
         setArrived(true);

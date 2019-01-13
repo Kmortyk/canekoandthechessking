@@ -7,6 +7,7 @@ import android.graphics.RectF;
 
 import com.kmortyk.canekoandthechessking.game.GameWorld;
 import com.kmortyk.canekoandthechessking.game.math.Vector2;
+import com.kmortyk.canekoandthechessking.resources.ResourceManager;
 
 import java.util.List;
 
@@ -39,7 +40,7 @@ public class PopUpText extends Effect {
 
         paint = new Paint();
         paint.setTextAlign(Paint.Align.CENTER);
-        paint.setTextSize(20);
+        paint.setTextSize(13*ResourceManager.getInstance().density());
 
         init(x, y);
     }

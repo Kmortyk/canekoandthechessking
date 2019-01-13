@@ -2,7 +2,7 @@ package com.kmortyk.canekoandthechessking.game.creatures;
 
 import android.graphics.Bitmap;
 
-import com.kmortyk.canekoandthechessking.game.GameWorld;
+import com.kmortyk.canekoandthechessking.thread.GameThread;
 
 /**
  * Created by user1 on 05.11.2018.
@@ -10,13 +10,19 @@ import com.kmortyk.canekoandthechessking.game.GameWorld;
 
 public class Hero extends Creature{
 
-    public Hero(GameWorld gameWorld, int i, int j, Bitmap texture) { super(gameWorld, i, j, texture); }
+    private GameThread gameThread;
+
+    public Hero(GameThread gameThread, int i, int j, Bitmap texture) {
+        super(gameThread.getGameWorld(), i, j, texture);
+        this.gameThread = gameThread;
+    }
 
     @Override
     protected void onArrived() {
         super.onArrived();
         path.clear();
         gameWorld.nextTurn();
+        gameThread.viewToHero();
     }
 
 }

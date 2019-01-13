@@ -20,35 +20,22 @@ public class GameMap {
 
     public int width, height;
 
-    public GameMap(GameResources gameResources, int[][] map) {
-        this.gameResources = gameResources;
+    public GameMap(GameResources gameResources) { this.gameResources = gameResources; }
+
+    public void setMap(int[][] map) {
+
         height = map.length;
-        width = map[0].length;
+        width  = map[0].length;
         this.map = new Step[height][width];
 
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
+        for (int i = 0; i < height; i++)
+            for (int j = 0; j < width; j++)
                 this.map[i][j] = gameResources.getStep(map[i][j], i, j);
-            }
-        }
 
     }
 
-    public void reload(int[][] map) {
-        height = map.length;
-        width = map[0].length;
-        this.map = new Step[height][width];
-
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-                this.map[i][j] = gameResources.getStep(map[i][j], i, j);
-            }
-        }
-    }
-
-    public Step get(int i, int j) {
-        return map[i][j];
-    }
+    @NonNull
+    public Step get(int i, int j) { return map[i][j]; }
 
     /**
      * @return touched tile if it can be touched
@@ -183,6 +170,14 @@ public class GameMap {
 
         return neighbors;
 
+    }
+
+    public void dispose() {
+        for(Step[] line: map) {
+            for (Step s: line) {
+                if(s != null) { s.texture.recycle(); s.setEmpty(); }
+            }
+        }
     }
 
 }

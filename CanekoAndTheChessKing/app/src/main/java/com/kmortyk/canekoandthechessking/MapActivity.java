@@ -24,7 +24,6 @@ public class MapActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         MapThread mapThread = new MapThread(this);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(new AppView(this, mapThread));
 
     }

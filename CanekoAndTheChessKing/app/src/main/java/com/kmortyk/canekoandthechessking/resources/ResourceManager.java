@@ -9,6 +9,9 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.util.DisplayMetrics;
 import android.util.Log;
 
 import com.kmortyk.canekoandthechessking.R;
@@ -34,8 +37,10 @@ public class ResourceManager {
 
     public static void Initialize(Context context) {
         if(instance == null) { instance = new ResourceManager(); }
-        instance.resources   = context.getResources();
-        instance.packageName = context.getPackageName();
+        instance.resources    = context.getResources();
+        instance.packageName  = context.getPackageName();
+
+        standardTypeface = instance.loadTypeface("sofiapro_light");
     }
 
     public static ResourceManager getInstance() {
@@ -56,14 +61,25 @@ public class ResourceManager {
      */
     public float density() { return resources.getDisplayMetrics().density; }
 
+    public float pxFromDp(final float dp) {
+        return dp * ((float) resources.getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
+    }
+
+    public float dpFromPx(final float px) {
+        return px / ((float) resources.getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
+    }
+
     /* --- fonts ----------------------------------------------------------------------------------*/
 
+    public static Typeface standardTypeface;
+
     public Typeface loadTypeface(String name) { return Typeface.createFromAsset(resources.getAssets(), "fonts/" + name + ".otf"); }
+
 
     /* --- drawable -------------------------------------------------------------------------------*/
 
     public Bitmap loadDrawable(String name) {
-        int id = getId(name, "drawable");
+        int id = getDrawableId(name);
 
          if(id == 0)
              return BitmapFactory.decodeResource(resources, R.drawable.err);
@@ -71,11 +87,24 @@ public class ResourceManager {
         return BitmapFactory.decodeResource(resources, id);
     }
 
-    public Bitmap loadDrawable(int idPath) { return BitmapFactory.decodeResource(resources, idPath); }
+    public Bitmap loadDrawable(int idPath) { return loadDrawable(idPath, 1); }
 
     public Bitmap loadDrawable(int idPath, double scale) {
-        Bitmap btm = BitmapFactory.decodeResource(resources, idPath);
-        return getResizedBitmap(btm, (int) (btm.getWidth() * scale), (int) (btm.getHeight() * scale));
+
+        Drawable drawable = resources.getDrawable(idPath);
+
+        if (drawable instanceof BitmapDrawable) {
+            Bitmap bitmap = ((BitmapDrawable)drawable).getBitmap();
+            return getResizedBitmap(bitmap, (int) (bitmap.getWidth() * scale), (int) (bitmap.getHeight() * scale));
+        }
+
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+
+        return getResizedBitmap(bitmap, (int) (bitmap.getWidth() * scale), (int) (bitmap.getHeight() * scale));
+
     }
 
     /**
@@ -135,7 +164,7 @@ public class ResourceManager {
                 if (parts.length >= 5) {
                     MapObject o = new MapObject(parts[0],
                                                 Float.valueOf(parts[1]) * density(),
-                                                Float.valueOf(parts[2]) * density() - map.getHeight() / 2,
+                                                Float.valueOf(parts[2]) * density(),
                                                 parts[3].replace("_", " "),
                                                 parts[4]);
                     o.centering();
@@ -207,7 +236,7 @@ public class ResourceManager {
                     }
 
                     parsedMap.enemies = enemiesList.toArray(new String[enemiesList.size()][]);
-                    continue;
+                    // continue;
 
                 }
 
@@ -227,10 +256,9 @@ public class ResourceManager {
 
     /**
      * @param name resource name
-     * @param defType drawable, raw, ...
      * @return ~R.id or 0 if error
      */
-    private int getId(String name, String defType) { return resources.getIdentifier(name, defType, packageName); }
+    private int getDrawableId(String name) { return resources.getIdentifier(name, "drawable", packageName); }
 
     /**
      * Removes non-printable characters (including '\n')

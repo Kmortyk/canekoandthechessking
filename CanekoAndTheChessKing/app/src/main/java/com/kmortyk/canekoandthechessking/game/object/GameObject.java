@@ -1,30 +1,32 @@
 package com.kmortyk.canekoandthechessking.game.object;
 
 import android.graphics.Bitmap;
-import android.graphics.Rect;
+import android.graphics.RectF;
 
 import com.kmortyk.canekoandthechessking.game.math.Vector2;
 import com.kmortyk.canekoandthechessking.resources.GameResources;
 
-import java.util.jar.Attributes;
-
 public class GameObject {
 
-    public Vector2 pos;    // FIXME bad design: (pos, bounds) -> (bounds)
-    public Rect    bounds;
-    public Bitmap  texture;
+    public  Vector2 pos;      // actual position of object
+    public  Bitmap  texture;
+    private RectF   bounds;   // rectangle that surrounds the object
 
     /**
-     * For derived classes
+     *  -------                  -------
+     * |       | <- bounds      |       | <- bounds
+     * |  pos  |            or  |       |
+     * |       |                |pos    |
+     *  -------                  -------
      */
-    protected GameObject() { }
+
+    public GameObject(Bitmap texture) { this(new Vector2(), texture); }
 
     public GameObject(Vector2 pos, Bitmap texture) {
         this.pos = pos;
         this.texture = texture;
 
-        bounds = new Rect();
-        bounds.set(0, 0, texture.getWidth(), texture.getHeight() * 2);
+        bounds = new RectF(0, 0, texture.getWidth(), texture.getHeight());
     }
 
     public final boolean contains(float x, float y) {
@@ -34,8 +36,8 @@ public class GameObject {
         return px >= bounds.left && py >= bounds.top && px <= bounds.right && py <= bounds.bottom;
     }
 
-    public final Rect getDebugRect(Vector2 viewOffsetVector) {
-        return new Rect(
+    public final RectF getDebugRect(Vector2 viewOffsetVector) {
+        return new RectF(
                    (int)(pos.x + viewOffsetVector.x) + bounds.left,
                    (int)(pos.y + viewOffsetVector.y) + bounds.top,
                   (int)(pos.x + viewOffsetVector.x) + bounds.right,
@@ -54,11 +56,26 @@ public class GameObject {
         pos.y += texture.getHeight() / 2;
     }
 
+    public final void offset(float dx, float dy) {
+        pos.x += dx;
+        pos.y += dy;
+    }
+
     public void moveTo(int i, int j) {
         float x = GameResources.getSectionWidth() * i;
         float y = GameResources.getSectionHeight() * j - texture.getHeight();
         pos.set(x, y);
         Vector2.toIsometric(pos);
     }
+
+    public float getWidth() { return bounds.width(); }
+
+    public float getHeight() { return bounds.height(); }
+
+    protected void centerBounds() { bounds.offset(-bounds.width()/4, -bounds.height()/4); }
+
+    protected void scaleBounds(float sx, float sy) { bounds.right *= sx; bounds.bottom *= sy; }
+
+    protected void setZeroBounds() { bounds.set(0, 0, 0, 0); }
 
 }

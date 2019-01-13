@@ -10,8 +10,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingStart="10dp"
+        android:paddingEnd="10dp"
         android:paddingTop="6dp"
-        android:text="Map name"
+        android:text="@string/map_name"
         android:textColor="@android:color/white"
         android:textStyle="bold" />
 
@@ -20,7 +21,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingStart="10dp"
-        android:text="Time: "
+        android:paddingEnd="10dp"
+        android:text="@string/time"
         android:textColor="@android:color/white" />
 
     <TextView
@@ -28,8 +30,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingStart="10dp"
+        android:paddingEnd="10dp"
         android:paddingBottom="6dp"
-        android:text="Steps: "
+        android:text="@string/steps"
         android:textColor="@android:color/white" />
 
 </LinearLayout>

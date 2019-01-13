@@ -1,17 +1,12 @@
 <resources>
     <string name="app_name">Caneko and The Chess King</string>
-
-    <string name="title_activity_main_menu">MainMenu</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
-
-    <string name="title_activity_fullscreen">FullscreenActivity</string>
     <string name="start">Start</string>
-    <string name="options">Options</string>
     <string name="scores">Scores</string>
-    <string name="credits">Credits</string>
     <string name="ver">Demo ver. 0.1</string>
 
     <string name="hero_name">Caneko</string>
+    <string name="map_name">Map name</string>
+    <string name="time">Time:</string>
+    <string name="steps">Steps:</string>
 
 </resources>

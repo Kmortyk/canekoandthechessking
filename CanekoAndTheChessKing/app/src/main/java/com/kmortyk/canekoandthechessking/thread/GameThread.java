@@ -7,6 +7,9 @@ import android.view.MotionEvent;
 
 import com.kmortyk.canekoandthechessking.GameActivity;
 import com.kmortyk.canekoandthechessking.game.GameMap;
+import com.kmortyk.canekoandthechessking.game.effects.MoveCamera;
+import com.kmortyk.canekoandthechessking.game.gameinterface.GameInterface;
+import com.kmortyk.canekoandthechessking.game.gameinterface.model.InterfaceElement;
 import com.kmortyk.canekoandthechessking.resources.GameResources;
 import com.kmortyk.canekoandthechessking.game.GameWorld;
 import com.kmortyk.canekoandthechessking.game.creatures.Enemy;
@@ -14,7 +17,6 @@ import com.kmortyk.canekoandthechessking.game.graphics.Shaders;
 import com.kmortyk.canekoandthechessking.game.math.Vector2;
 import com.kmortyk.canekoandthechessking.game.creatures.Hero;
 import com.kmortyk.canekoandthechessking.game.steps.Step;
-import com.kmortyk.canekoandthechessking.resources.ResourceManager;
 
 import java.util.ArrayList;
 
@@ -32,6 +34,9 @@ public class GameThread extends DrawThread {
     private GameActivity gameActivity;
     private GameWorld gameWorld;
     private GameResources gameResources;
+    private GameInterface gameInterface;
+
+    private int width, height;
 
     public GameThread(GameActivity gameActivity, String level) {
 
@@ -48,21 +53,26 @@ public class GameThread extends DrawThread {
 
         gameResources = new GameResources(this);
         gameWorld = new GameWorld(gameResources);
-        gameWorld.createWorld(level);
+        gameWorld.create(level);
 
     }
 
     @Override
     public void run() {
 
-        while(isRun) {
+        while(isRun()) {
 
             calculateDelta();
 
             Canvas canvas = surfaceHolder.lockCanvas();
             if(canvas != null) {
 
-                if(firstRun()) { viewToHero(canvas); }
+                if(firstRun()) {
+                    width = canvas.getWidth();
+                    height = canvas.getHeight();
+                    gameInterface = new GameInterface(this, width, height);
+                    viewToHero();
+                }
 
                 bckPaint.setShader(Shaders.getBackgroundGradient(canvas.getWidth(), canvas.getHeight(), viewOffset));
                 canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), bckPaint);
@@ -71,6 +81,7 @@ public class GameThread extends DrawThread {
                 drawHero(canvas);
                 drawEnemies(canvas);
                 drawEffects(canvas);
+                drawInterface(canvas);
 
                 if(DEBUG_MODE) drawDebug(canvas);
 
@@ -115,9 +126,8 @@ public class GameThread extends DrawThread {
             for (int j = 0; j < gameMap.width; j++) {
 
                 Step cur = gameMap.get(i, j);
-                if(cur == null) continue;
-
                 canvas.drawBitmap(cur.texture, cur.pos.x + viewOffset.x, cur.pos.y + viewOffset.y, null);
+
                 if(DEBUG_MODE) canvas.drawRect(cur.getDebugRect(viewOffset), debugPaint);
 
             }
@@ -125,10 +135,26 @@ public class GameThread extends DrawThread {
 
     }
 
+    private void drawInterface(Canvas canvas) {
+        gameInterface.draw(canvas);
+        if(DEBUG_MODE) {
+            for (InterfaceElement e: gameInterface.getElements()) {
+                canvas.drawRect(e.bounds, debugPaint);
+            }
+        }
+    }
+
+    @Override
+    public void onTouchDown(MotionEvent event) { gameInterface.onTouchDown(event.getX(), event.getY()); }
+
     @Override
     public void onTouch(MotionEvent event) {
 
-        gameWorld.onTouch(event.getX() - viewOffset.x, event.getY() - viewOffset.y);
+        if(gameInterface.onTouch(event.getX(), event.getY())) return;
+
+        if(gameWorld.onTouch(event.getX() - viewOffset.x, event.getY() - viewOffset.y) != null) {
+            gameInterface.increaseSteps();
+        }
 
         if(DEBUG_MODE) debugTouches.add(new Vector2(event.getX() - viewOffset.x, event.getY() - viewOffset.y));
 
@@ -137,11 +163,7 @@ public class GameThread extends DrawThread {
     @Override
     public void onSwipe(float dx, float dy) { viewOffset.add(dx, dy); }
 
-    private void viewToHero(Canvas canvas) {
-        Hero hero = gameWorld.getHero();
-        viewOffset.x = canvas.getWidth() / 2 - hero.centerX();
-        viewOffset.y = canvas.getHeight() / 2 - hero.centerY();
-    }
+    public void viewToHero() { gameWorld.addEffect(new MoveCamera(this, width, height, gameWorld.getHero())); }
 
     public GameWorld getGameWorld() {
         if(gameWorld == null) throw new RuntimeException("Try to get null game world.");
@@ -149,11 +171,26 @@ public class GameThread extends DrawThread {
     }
 
     public void nextMap() {
-        if(gameResources.isLastMap()) {
-            gameActivity.openWorldMap();
-        }else {
+
+        if(gameResources.isLastMap()) { returnToMap(); }
+        else {
             gameWorld.nextMap();
+            gameInterface.nextMap();
+            viewToHero();
         }
+
     }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        gameWorld.dispose();
+    }
+
+    public GameResources getResources() { return gameResources; }
+
+    public void returnToMap() { gameActivity.openWorldMap(); }
+
+    public int getOrientation() { return gameActivity.getResources().getConfiguration().orientation; }
 
 }

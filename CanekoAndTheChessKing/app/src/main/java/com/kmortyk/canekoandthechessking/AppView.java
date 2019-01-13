@@ -2,7 +2,6 @@ package com.kmortyk.canekoandthechessking;
 
 import android.content.Context;
 import android.graphics.PixelFormat;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.SurfaceHolder;
@@ -16,10 +15,12 @@ import com.kmortyk.canekoandthechessking.thread.DrawThread;
 
 public class AppView extends SurfaceView implements SurfaceHolder.Callback {
 
-    DrawThread drawThread;
+    private DrawThread drawThread;
+
+    private AppView(Context context) { super(context); }
 
     public AppView(Context context, DrawThread drawThread) {
-        super(context);
+        this(context);
 
         getHolder().addCallback(this);
         // smooth graphics
@@ -46,6 +47,7 @@ public class AppView extends SurfaceView implements SurfaceHolder.Callback {
                 retry = false;
             } catch (InterruptedException e) { e.printStackTrace(); }
         }
+        drawThread = null;
     }
 
     private Vector2 startTouchPos = new Vector2();
@@ -59,6 +61,7 @@ public class AppView extends SurfaceView implements SurfaceHolder.Callback {
 
             case MotionEvent.ACTION_DOWN:
                 startTouchPos.set(event.getX(), event.getY());
+                drawThread.onTouchDown(event);
                 break;
 
             case MotionEvent.ACTION_UP:

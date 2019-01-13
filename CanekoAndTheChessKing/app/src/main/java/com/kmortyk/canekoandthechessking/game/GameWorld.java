@@ -1,8 +1,10 @@
 package com.kmortyk.canekoandthechessking.game;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.kmortyk.canekoandthechessking.game.item.Inventory;
 import com.kmortyk.canekoandthechessking.resources.GameResources;
 import com.kmortyk.canekoandthechessking.resources.ParsedMap;
 import com.kmortyk.canekoandthechessking.game.creatures.Creature;
@@ -16,160 +18,146 @@ import com.kmortyk.canekoandthechessking.resources.ResourceManager;
 import com.kmortyk.canekoandthechessking.scores.database.Scores;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 public class GameWorld {
 
     private GameResources gameResources;
+    private Inventory inventory;
+
+    private LinkedList<Effect> effects;
+    private ArrayList<Enemy> enemies;
     private GameMap gameMap;
-    private ArrayList<Effect> effects = new ArrayList<>();
-    private ArrayList<Enemy> enemies = new ArrayList<>();
     private Hero hero;
 
     private boolean isTurnBased = true;
-    private boolean hasSpaces = true;
     private boolean heroTurn = true;
-    private int curEnemy = 0;
 
-    private int pastTime = 0;
-    private int steps = 0;
+    private int spaces;
+    private int curEnemy;
+    private int pastTime;
+    private int steps;
 
-    public GameWorld(GameResources gameResources) { this.gameResources = gameResources; }
+    public GameWorld(GameResources gameResources) {
+        this.gameResources = gameResources;
+        gameMap = new GameMap(gameResources);
+        effects = new LinkedList<>();
+        enemies = new ArrayList<>();
+        inventory = new Inventory();
+    }
+
+    public void create(String mapName) {
+
+        if(mapName == null) mapName = gameResources.currentMap();
+
+        ParsedMap parsedMap = ResourceManager.getInstance().loadMapFromAssets(mapName);
+
+        gameMap.setMap(parsedMap.map);
+
+        if(hero == null) { hero = gameResources.getHero(this, parsedMap.heroI, parsedMap.heroJ); }
+        else             { hero.moveTo(parsedMap.heroI, parsedMap.heroJ); }
+
+        for (String[] parts: parsedMap.enemies) {
+            String name =           parts[0];
+            int i = Integer.valueOf(parts[1]);
+            int j = Integer.valueOf(parts[2]);
+            enemies.add(gameResources.getEnemy(this, name, i, j));
+        }
+
+        spaces = parsedMap.spaces;
+
+    }
 
     public void update(float delta) {
 
         pastTime += delta;
 
         hero.update(delta);
+        for(Enemy e: enemies) e.update(delta);
 
-        if(isTurnBased()) {
-
-            if(isHeroTurn()) { hero.update(delta); }
-            else { enemies.get(curEnemy).update(delta); }
-
-        }else{
-
-            hero.update(delta);
-            for(Enemy e: enemies) e.update(delta);
-
+        Iterator<Effect> it = effects.iterator();
+        while (it.hasNext()) {
+            Effect e = it.next();
+            if (!e.extend(delta)) { e.dispose(); it.remove(); }
         }
 
-        for(int i = 0; i < effects.size(); i++) {
-            if(!effects.get(i).extend(delta)) {
-                effects.get(i).dispose();
-                effects.remove(i); // ugh...
-                i = 0;
-            }
-        }
-
-    }
-
-    public void createWorld(String level) {
-
-        ParsedMap parsedMap;
-
-        if(level != null) { parsedMap = ResourceManager.getInstance().loadMapFromAssets(level); }
-        else              { parsedMap = ResourceManager.getInstance().loadMapFromAssets(gameResources.currentMap()); }
-
-        gameMap = new GameMap(gameResources, parsedMap.map);
-        loadEnemies(parsedMap.enemies);
-        hero = gameResources.getHero(this,4, 0);
-
-    }
-
-    private void loadEnemies(String[][] estr) {
-        for (String[] parts: estr) {
-            enemies.add(gameResources.getEnemy(this, parts[0], Integer.valueOf(parts[1]), Integer.valueOf(parts[2])));
-        }
-    }
-
-    public GameMap getGameMap() {
-        return gameMap;
     }
 
     public void nextMap() {
-
         enemies.clear();
         effects.clear();
-        curEnemy = 0;
 
-        gameResources.nextMap();
-
-        ParsedMap parsedMap = ResourceManager.getInstance().loadMapFromAssets(gameResources.currentMap());
-
-        gameMap.reload(parsedMap.map);
-        loadEnemies(parsedMap.enemies);
-
-        hero.moveTo(4, 0);
-
+        create(gameResources.nextMap());
         Scores.getInstance().addEntry(pastTime, steps, gameResources.currentMap());
-        pastTime = 0;
-        steps = 0;
 
+        curEnemy = pastTime = steps = 0;
     }
 
-    public void onTouch(float x, float y) {
+    public PathNode onTouch(float x, float y) {
 
-        if(!hero.isArrived() || !isHeroTurn()) { return; }
+        if(!hero.isArrived() || !isHeroTurn()) { return null; }
 
         PathNode touched = gameMap.touch(x, y);
 
         if(touched != null) {
             LinkedList<PathNode> path = gameMap.findPath(hero.node, touched);
             hero.addAllPathNodes(path);
+            if(path.size() > 0) return path.get(0);
         }else{
             if(hero.contains(x, y)) PopUpText.uniqueAddTo(this, hero.centerX(), hero.centerY(), GameResources.getHeroName());
         }
 
+        return null;
+
     }
 
     public void move(Creature creature, @Nullable PathNode from, PathNode to) {
-        if(from != null) get(from.i, from.j).unsetCreature();
-        get(to.i, to.j).setCreature(creature);
+        if(from != null) { get(from.i, from.j).setEmpty(); }
+        get(to.i, to.j).setCurrentObject(creature);
     }
 
-    /**
-     * Will be removed in future releases
-     * @deprecated
-     */
-    public void move(Creature creature, int fromI, int fromJ, int toI, int toJ) {
-        get(fromI, fromJ).unsetCreature();
-        get(toI, toJ).setCreature(creature);
-    }
-
-    public boolean isValid(int i, int j) { return i >= 0 && j >= 0 && i < gameMap.height && j < gameMap.width && get(i, j) != null; }
+    public boolean isValid(int i, int j) { return i >= 0 && j >= 0 && i < gameMap.height && j < gameMap.width; }
 
     public boolean isEmpty(int i, int j) { return gameMap.get(i, j).isEmpty(); }
 
     public boolean hasHero(int i, int j) { return gameMap.get(i, j).getCreature() instanceof Hero; }
 
-    @Nullable
+    @NonNull
     public Step get(int i, int j) { return gameMap.get(i, j); }
+
+    public GameMap getGameMap() {
+        return gameMap;
+    }
 
     public Hero getHero() { return hero; }
 
     public ArrayList<Enemy> getEnemies() { return enemies; }
 
-    public ArrayList<Effect> getEffects() { return effects; }
+    public LinkedList<Effect> getEffects() { return effects; }
 
     public void addEffect(Effect e) { effects.add(e); }
 
-    public boolean isTurnBased() { return isTurnBased; }
+    private boolean isTurnBased() { return isTurnBased; }
 
-    public boolean hasSpaces() { return hasSpaces; }
+    public void setTurnBased(boolean isTurnBased) { this.isTurnBased = isTurnBased; }
 
-    public boolean isHeroTurn() { return heroTurn || !isTurnBased(); }
+    public int getSpaces() { return spaces; }
+
+    private boolean isHeroTurn() { return heroTurn || !isTurnBased(); }
 
     public void nextTurn() {
-        if(heroTurn) steps++;
         heroTurn = !heroTurn;
+
+        if(heroTurn) {
+            curEnemy = (curEnemy + 1) % enemies.size();
+        }else{
+            steps++;
+            enemies.get(curEnemy).nextStep();
+        }
+
     }
 
-    public void nextEnemy() { curEnemy = (curEnemy + 1) % enemies.size(); }
-
-    /**
-     * @deprecated
-     */
     public void debugMap() {
         // -------------------------------------------------------------------
         StringBuilder map = new StringBuilder();
@@ -179,12 +167,8 @@ public class GameWorld {
 
                 Step step = gameMap.get(i, j);
 
-                if(step != null) {
-                    Creature creature = step.getCreature();
-                    map.append(creature).append(" ");
-                }
-
-                else { map.append("     "); }
+                Creature creature = step.getCreature();
+                map.append(creature).append(" ");
 
             }
             map.append("\n");
@@ -192,6 +176,13 @@ public class GameWorld {
 
         Log.d("Map", map.toString());
         // -------------------------------------------------------------------
+    }
+
+    public void dispose() {
+        for(Effect e: effects) e.dispose();
+        for(Enemy e: enemies) e.texture.recycle();
+        gameMap.dispose();
+        hero.texture.recycle();
     }
 
 }

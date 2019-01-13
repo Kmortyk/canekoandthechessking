@@ -22,16 +22,14 @@ public class ExitStep extends Step {
      * Data constructor
      */
     public ExitStep(GameThread gameThread, int flags, Bitmap texture) {
+        super(flags, texture);
         this.gameThread = gameThread;
-        this.texture = texture;
-        this.flags = flags;
     }
 
     @Override
     public void onStep(Creature creature) {
         if(creature instanceof Enemy) return; // <- do not touch
         gameThread.nextMap();
-        // gameThread.firstRun = true;
     }
 
     @Override

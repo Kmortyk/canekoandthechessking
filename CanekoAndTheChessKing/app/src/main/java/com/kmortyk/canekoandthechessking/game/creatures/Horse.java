@@ -19,17 +19,17 @@ public class Horse extends Enemy {
         LinkedList<PathNode> nodes = new LinkedList<>();
 
         int i = node.i, j = node.j;
-        int spaces = gameWorld.hasSpaces() ? 2 : 1;
+        int steps = 1 + gameWorld.getSpaces();
 
-        checkNode(i + 2*spaces, j + spaces, nodes);
-        checkNode(i + 2*spaces, j - spaces, nodes);
-        checkNode(i - 2*spaces, j + spaces, nodes);
-        checkNode(i - 2*spaces, j - spaces, nodes);
+        checkNode(i + 2*steps, j + steps, nodes);
+        checkNode(i + 2*steps, j - steps, nodes);
+        checkNode(i - 2*steps, j + steps, nodes);
+        checkNode(i - 2*steps, j - steps, nodes);
 
-        checkNode(i + spaces, j + 2*spaces, nodes);
-        checkNode(i - spaces, j + 2*spaces, nodes);
-        checkNode(i + spaces, j - 2*spaces, nodes);
-        checkNode(i - spaces, j - 2*spaces, nodes);
+        checkNode(i + steps, j + 2*steps, nodes);
+        checkNode(i - steps, j + 2*steps, nodes);
+        checkNode(i + steps, j - 2*steps, nodes);
+        checkNode(i - steps, j - 2*steps, nodes);
 
         return nodes;
     }
