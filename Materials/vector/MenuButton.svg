@@ -1,0 +1,17 @@
+<svg id="Слой_1" data-name="Слой 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 464 464">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #b1adac;
+        stroke-miterlimit: 10;
+        stroke-width: 32px;
+      }
+    </style>
+  </defs>
+  <title>MenuButton</title>
+  <rect class="cls-1" x="16" y="16" width="432" height="432" rx="10.55" ry="10.55"/>
+  <line class="cls-1" x1="71" y1="126" x2="391" y2="126"/>
+  <line class="cls-1" x1="71" y1="232" x2="391" y2="232"/>
+  <line class="cls-1" x1="71" y1="336" x2="391" y2="336"/>
+</svg>

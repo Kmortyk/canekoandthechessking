@@ -1,0 +1,33 @@
+<svg id="Слой_1" data-name="Слой 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 440">
+  <defs>
+    <style>
+      .cls-1, .cls-2, .cls-3 {
+        fill: none;
+        stroke: #b1adac;
+        stroke-miterlimit: 10;
+      }
+
+      .cls-1, .cls-3 {
+        stroke-width: 8px;
+      }
+
+      .cls-1 {
+        opacity: 0;
+      }
+
+      .cls-2 {
+        stroke-width: 32px;
+      }
+    </style>
+  </defs>
+  <title>ExitButton2</title>
+  <rect class="cls-1" x="4" y="4" width="432" height="432" rx="10.55" ry="10.55"/>
+  <path class="cls-2" d="M415,150" transform="translate(-36 -36)"/>
+  <path class="cls-2" d="M95,150" transform="translate(-36 -36)"/>
+  <path class="cls-2" d="M415,256" transform="translate(-36 -36)"/>
+  <path class="cls-2" d="M95,256" transform="translate(-36 -36)"/>
+  <path class="cls-2" d="M415,360" transform="translate(-36 -36)"/>
+  <path class="cls-2" d="M95,360" transform="translate(-36 -36)"/>
+  <line class="cls-3" x1="59" y1="59.17" x2="381" y2="380.83"/>
+  <line class="cls-3" x1="381" y1="59.17" x2="59" y2="380.83"/>
+</svg>
