@@ -4,7 +4,7 @@ import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Shader;
 
-import com.kmortyk.canekoandthechessking.game.math.Vector2;
+import com.kmortyk.canekoandthechessking.util.Vector2;
 
 public class Shaders {
 
@@ -17,6 +17,7 @@ public class Shaders {
                 Color.parseColor("#393939"),
                 Color.parseColor("#1F1F1F"),
                 Shader.TileMode.CLAMP);
+
     }
 
     public static Shader getStartLogoGradient(float width, float height) {

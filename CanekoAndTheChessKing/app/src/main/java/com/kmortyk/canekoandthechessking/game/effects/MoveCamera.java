@@ -2,7 +2,8 @@ package com.kmortyk.canekoandthechessking.game.effects;
 
 import android.graphics.Canvas;
 
-import com.kmortyk.canekoandthechessking.game.math.Vector2;
+import com.kmortyk.canekoandthechessking.resources.ResourceManager;
+import com.kmortyk.canekoandthechessking.util.Vector2;
 import com.kmortyk.canekoandthechessking.game.object.GameObject;
 import com.kmortyk.canekoandthechessking.thread.DrawThread;
 
@@ -11,7 +12,7 @@ public class MoveCamera extends Effect {
     private final DrawThread drawThread;
     private final Vector2 to;
 
-    private final static float speed = 0.32f;
+    private final static float speed = ResourceManager.pxFromDp(4.266f);
     private final static float err   = 5f;
 
     private Vector2 lastOffset = new Vector2();
@@ -24,7 +25,7 @@ public class MoveCamera extends Effect {
      * @param height for centering
      * @param o object which should be in the center
      */
-    public MoveCamera(DrawThread drawThread, int width, int height, GameObject o) { this(drawThread, width/2 - o.pos.x, height/2 - o.pos.y); }
+    public MoveCamera(DrawThread drawThread, int width, int height, GameObject o) { this(drawThread, width*0.5f - o.pos.x, height*0.5f - o.pos.y); }
 
     /**
      * @param drawThread main thread (exm: GameThread)
@@ -46,9 +47,9 @@ public class MoveCamera extends Effect {
         Vector2 viewOffset = drawThread.getViewOffset();
 
         // if changed by player
-         if(!lastOffset.equals(viewOffset)) return false;
+           if(!lastOffset.equals(viewOffset)) return false;
 
-        float speed = getSpeed(delta, Vector2.dst(viewOffset, to));
+        float speed = getSpeed(Vector2.dst(viewOffset, to));
 
         if(viewOffset.x < to.x) viewOffset.x += speed * 1.5;
         if(viewOffset.x > to.x) viewOffset.x -= speed * 1.5;
@@ -73,10 +74,10 @@ public class MoveCamera extends Effect {
 
     // dst2, dst - the closer, the lower the speed
     // speed, delta - smooth
-    private float getSpeed(float delta, float dst) {
+    private float getSpeed(float dst) {
 
         // linear
-        float v  = speed * delta * dst;
+        float v  = speed * dst;
               v /= 100;
 
         // quadratic

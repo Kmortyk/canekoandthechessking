@@ -1,5 +1,6 @@
 package com.kmortyk.canekoandthechessking.thread;
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -8,14 +9,15 @@ import android.util.Log;
 import android.view.MotionEvent;
 
 import com.kmortyk.canekoandthechessking.MapActivity;
-import com.kmortyk.canekoandthechessking.game.gameinterface.model.InterfaceElement;
-import com.kmortyk.canekoandthechessking.game.gameinterface.model.TextElement;
+import com.kmortyk.canekoandthechessking.gameinterface.model.InterfaceElement;
+import com.kmortyk.canekoandthechessking.gameinterface.model.TextElement;
 import com.kmortyk.canekoandthechessking.R;
 import com.kmortyk.canekoandthechessking.game.object.MapObject;
+import com.kmortyk.canekoandthechessking.resources.GameResources;
 import com.kmortyk.canekoandthechessking.resources.ResourceManager;
 import com.kmortyk.canekoandthechessking.game.effects.Effect;
 import com.kmortyk.canekoandthechessking.game.effects.JumpOnSpot;
-import com.kmortyk.canekoandthechessking.game.math.Vector2;
+import com.kmortyk.canekoandthechessking.util.Vector2;
 import com.kmortyk.canekoandthechessking.game.object.GameObject;
 
 import java.util.ArrayList;
@@ -37,6 +39,7 @@ public class MapThread extends DrawThread {
 
     private Paint debugPaint;
 
+    private GameResources gameResources;
     private ArrayList<MapObject> activeObjects;
     private GameObject littleCaneko;
     private Bitmap worldMap;
@@ -57,45 +60,34 @@ public class MapThread extends DrawThread {
             debugPaint.setStyle(Paint.Style.STROKE);
         }
 
-        activeObjects = ResourceManager.getInstance().loadGameWorld(worldMap);
+        activeObjects = ResourceManager.getInstance().loadGameWorld();
     }
 
+    @SuppressLint("DrawAllocation")
     @Override
-    public void run() {
+    public void onDraw(Canvas canvas) {
 
-        while (isRun()) {
+        if(firstRun()) {
+            width  = canvas.getWidth();
+            height = canvas.getHeight();
 
-            Canvas canvas = surfaceHolder.lockCanvas();
+            mapText = new TextElement("", width * 0.5f, height * 0.125f);
+            mapText.setAlignCenter(true);
 
-            calculateDelta();
-            update(delta);
-
-            if(canvas != null) {
-
-                if(firstRun()) {
-                    width  = canvas.getWidth();
-                    height = canvas.getHeight();
-
-                    mapText = new TextElement("", width / 2, height / 8);
-                    mapText.setAlignCenter(true);
-
-                    interfaceElements.add(mapText);
-                    viewOffset.set(0, height-worldMap.getHeight());
-                    heroToObject(activeObjects.get(0));
-                }
-
-                drawMap(canvas);
-                drawObjects(canvas);
-                drawHero(canvas);
-                drawEffects(canvas);
-                drawInterface(canvas);
-
-                if(DEBUG_MODE) drawDebug(canvas);
-
-                surfaceHolder.unlockCanvasAndPost(canvas);
-            }
-
+            interfaceElements.add(mapText);
+            viewOffset.set(0, height-worldMap.getHeight());
+            heroToObject(activeObjects.get(0));
         }
+
+        drawMap(canvas);
+        drawObjects(canvas);
+        drawHero(canvas);
+        drawEffects(canvas);
+        drawInterface(canvas);
+
+        if(DEBUG_MODE) drawDebug(canvas);
+
+        update(delta);
 
     }
 
@@ -109,11 +101,9 @@ public class MapThread extends DrawThread {
 
     private void heroToObject(MapObject o) {
         littleCaneko.pos.set(o.pos.x,
-                             o.pos.y - littleCaneko.getHeight() + o.texture.getHeight() / 2);
+                             o.pos.y - littleCaneko.getHeight() + o.texture.getHeight() * 0.5f);
 
-        Log.d("Compare", "\"" + mapText.getText() + "\" and \"" + o.label + "\"");
-
-        if(mapText.getText().equals(o.label)) startLevel(o.level);
+        if(mapText.textEquals(o.label)) startLevel(o.level);
         mapText.setText(o.label);
     }
 
@@ -185,9 +175,11 @@ public class MapThread extends DrawThread {
 
     @Override
     public void dispose() {
-        super.dispose();
         worldMap.recycle();
         littleCaneko.texture.recycle();
+        worldMap = null;
+        littleCaneko.texture = null;
+        System.gc();
     }
 
 }

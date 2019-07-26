@@ -3,7 +3,7 @@ package com.kmortyk.canekoandthechessking.game.object;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
 
-import com.kmortyk.canekoandthechessking.game.math.Vector2;
+import com.kmortyk.canekoandthechessking.util.Vector2;
 import com.kmortyk.canekoandthechessking.resources.GameResources;
 
 public class GameObject {
@@ -20,6 +20,8 @@ public class GameObject {
      *  -------                  -------
      */
 
+    private boolean isStatic = false; // if true no redraw every frame
+
     public GameObject(Bitmap texture) { this(new Vector2(), texture); }
 
     public GameObject(Vector2 pos, Bitmap texture) {
@@ -29,7 +31,7 @@ public class GameObject {
         bounds = new RectF(0, 0, texture.getWidth(), texture.getHeight());
     }
 
-    public final boolean contains(float x, float y) {
+    public boolean contains(float x, float y) {
         float px = x - pos.x;
         float py = y - pos.y;
 
@@ -52,21 +54,26 @@ public class GameObject {
     public final float bottomY() { return pos.y + bounds.height(); }
 
     public final void centering() {
-        pos.x -= texture.getWidth() / 2;
-        pos.y += texture.getHeight() / 2;
+        pos.x -= texture.getWidth() * 0.5f;
+        pos.y += texture.getHeight() * 0.5f;
     }
 
-    public final void offset(float dx, float dy) {
-        pos.x += dx;
-        pos.y += dy;
+    public void centerAtTile() {
+        // centering
+        pos.x -= getWidth()*0.5f - GameResources.getStepWidth()*0.5f;
+        pos.y -= getHeight() - GameResources.getStepHeight()*0.5f;
     }
 
     public void moveTo(int i, int j) {
         float x = GameResources.getSectionWidth() * i;
-        float y = GameResources.getSectionHeight() * j - texture.getHeight();
+        float y = GameResources.getSectionHeight() * j - GameResources.getStepHeight();
         pos.set(x, y);
         Vector2.toIsometric(pos);
     }
+
+    public void setStatic(boolean isStatic) { this.isStatic = isStatic; }
+
+    public boolean isStatic() { return isStatic; }
 
     public float getWidth() { return bounds.width(); }
 

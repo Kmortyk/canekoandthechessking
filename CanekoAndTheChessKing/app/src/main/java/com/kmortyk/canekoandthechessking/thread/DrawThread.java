@@ -1,14 +1,16 @@
 package com.kmortyk.canekoandthechessking.thread;
 
 import android.content.Context;
+import android.graphics.Canvas;
+import android.os.SystemClock;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 
-import com.kmortyk.canekoandthechessking.game.math.Vector2;
+import com.kmortyk.canekoandthechessking.util.Vector2;
 
 public abstract class DrawThread extends Thread {
 
-    protected SurfaceHolder surfaceHolder;
+    private SurfaceHolder surfaceHolder;
     protected Context context;
 
     protected Vector2 viewOffset = new Vector2();
@@ -16,6 +18,7 @@ public abstract class DrawThread extends Thread {
     public void initialize(Context context, SurfaceHolder surfaceHolder) {
         this.surfaceHolder = surfaceHolder;
         this.context = context;
+        firstRun = true;
     }
 
     /* --- run ------------------------------------------------------------------------------------*/
@@ -24,7 +27,9 @@ public abstract class DrawThread extends Thread {
 
     private boolean firstRun = true;
 
-    protected boolean isRun() { return isRun; }
+    private boolean isRun() { return isRun; }
+
+    public void setRun(boolean isRun) { this.isRun = isRun; }
 
     /**
      * @return true one time.
@@ -37,35 +42,56 @@ public abstract class DrawThread extends Thread {
         return false;
     }
 
-    public abstract void run();
+    @Override
+    public void run() {
+        while (isRun()) {
+            calculateDelta();
+            Canvas canvas = surfaceHolder.lockCanvas();
+            if(canvas != null) {
+                // guaranteed to be drawn in one thread
+                onDraw(canvas);
+                surfaceHolder.unlockCanvasAndPost(canvas);
+            }
+        }
+    }
 
-    public void dispose() { isRun = false; }
+    protected abstract void onDraw(Canvas canvas);
 
-    /* --- delta time -----------------------------------------------------------------------------*/
+    public abstract void dispose();
 
-    private long lastTime = System.nanoTime(); // TODO use timer instead
-    private static final float LOCK_DELTA = 20;
+    /* --- delta time ---------------------------------------------------------------------------- */
+
+    private long lastTime = SystemClock.elapsedRealtimeNanos(); // TODO use timer instead
     protected float delta = 0;
 
-    protected final void calculateDelta() {
-        long curTime = System.nanoTime(); // TODO elapsed time
-        delta = (curTime - lastTime) / 1000000;
+    private void calculateDelta() {
+        //
+        //  60 fps <=> delta ~ 0.016f
+        //
+        long curTime = SystemClock.elapsedRealtimeNanos();
+        delta = (curTime - lastTime) / 1_000_000_000.0f;
         lastTime = curTime;
-
-        if(delta > LOCK_DELTA) // FIXME lock delta
-            delta = LOCK_DELTA;
     }
 
     /* --- event ----------------------------------------------------------------------------------*/
 
     public abstract void onTouch(MotionEvent event);
 
-    public void onTouchDown(MotionEvent event) { }
-
     public abstract void onSwipe(float dx, float dy);
+
+    public void onSwipeRight(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) { }
+
+    public void onSwipeLeft(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) { }
+
+    public void onSwipeTop(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) { }
+
+    public void onSwipeBottom(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) { }
+
+    public void onTouchDown(MotionEvent event) { }
 
     /* --------------------------------------------------------------------------------------------*/
 
+    // for effects
     public Vector2 getViewOffset() { return viewOffset; }
 
 }

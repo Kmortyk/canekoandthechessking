@@ -9,4 +9,7 @@
     <string name="time">Time:</string>
     <string name="steps">Steps:</string>
 
+    <string name="coin">Монета</string>
+    <string name="hoe">Мотыга</string>
+
 </resources>

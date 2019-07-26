@@ -1,6 +1,5 @@
 package com.kmortyk.canekoandthechessking.menu;
 
-import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.TextView;
@@ -33,7 +32,7 @@ public class MenuButton {
     }
 
     public void fadeIn() {
-        final AlphaAnimation fadeIn = new AlphaAnimation(1f, 1f);
+        AlphaAnimation fadeIn = new AlphaAnimation(1f, 1f);
         fadeIn.setDuration(10);
         fadeIn.setFillAfter(true);
         textView.startAnimation(fadeIn);

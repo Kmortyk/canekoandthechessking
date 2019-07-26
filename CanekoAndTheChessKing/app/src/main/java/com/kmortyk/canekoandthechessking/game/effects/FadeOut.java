@@ -4,7 +4,7 @@ import android.graphics.Canvas;
 import android.support.annotation.Nullable;
 
 import com.kmortyk.canekoandthechessking.resources.ResourceManager;
-import com.kmortyk.canekoandthechessking.game.math.Vector2;
+import com.kmortyk.canekoandthechessking.util.Vector2;
 import com.kmortyk.canekoandthechessking.game.object.GameObject;
 
 public class FadeOut extends Effect {

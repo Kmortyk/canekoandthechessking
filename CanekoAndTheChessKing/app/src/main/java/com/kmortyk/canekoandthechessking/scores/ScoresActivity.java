@@ -1,6 +1,5 @@
 package com.kmortyk.canekoandthechessking.scores;
 
-import android.content.pm.ActivityInfo;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -10,7 +9,7 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import com.kmortyk.canekoandthechessking.R;
-import com.kmortyk.canekoandthechessking.scores.database.Scores;
+import com.kmortyk.canekoandthechessking.database.Scores;
 
 import java.util.ArrayList;
 
@@ -26,7 +25,7 @@ public class ScoresActivity extends AppCompatActivity {
         if(ab != null) ab.hide();
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        // setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_scores);
 
         ArrayList<Scores.ScoreEntry> entries = Scores.getInstance().getEntries();

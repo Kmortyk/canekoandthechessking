@@ -4,7 +4,7 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.kmortyk.canekoandthechessking.game.object.PathNode;
-import com.kmortyk.canekoandthechessking.game.steps.Step;
+import com.kmortyk.canekoandthechessking.game.tiles.Tile;
 import com.kmortyk.canekoandthechessking.resources.GameResources;
 
 import java.util.LinkedList;
@@ -16,7 +16,7 @@ import java.util.LinkedList;
 public class GameMap {
 
     private GameResources gameResources;
-    private Step[][] map;
+    private Tile[][] map;
 
     public int width, height;
 
@@ -26,32 +26,28 @@ public class GameMap {
 
         height = map.length;
         width  = map[0].length;
-        this.map = new Step[height][width];
+        this.map = new Tile[height][width];
 
         for (int i = 0; i < height; i++)
             for (int j = 0; j < width; j++)
-                this.map[i][j] = gameResources.getStep(map[i][j], i, j);
+                this.map[i][j] = gameResources.getTile(map[i][j], i, j);
 
     }
 
     @NonNull
-    public Step get(int i, int j) { return map[i][j]; }
+    public Tile get(int i, int j) { return map[i][j]; }
 
     /**
-     * @return touched tile if it can be touched
+     * @return touched tile if it canBeExecuted be touched
      */
     public PathNode touch(float x, float y) {
 
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
 
-                if(map[i][j] != null &&
-                   map[i][j].contains(x, y) &&
-                   map[i][j].isTouchable()) {
+                Tile cur = get(i, j);
 
-                    return new PathNode(map[i][j], i, j);
-
-                }
+                if(cur.isTouchable() && cur.contains(x, y)) { return new PathNode(cur, i, j); }
 
             }
         }
@@ -85,7 +81,7 @@ public class GameMap {
             for (PathNode node : open) { if(current == null || node.f < current.f) current = node; }
 
             // конец, нашли путь от начала до конца
-            if(current != null && current.equals(end)) return reconstructPath(start, current);
+            if(current != null && current.equals(end)) return reconstructPath(current);
 
             open.remove(current);
             closed.add(current);
@@ -119,12 +115,12 @@ public class GameMap {
         return new LinkedList<>();
     }
 
-    private LinkedList<PathNode> reconstructPath(PathNode start, PathNode end) {
+    private LinkedList<PathNode> reconstructPath(PathNode end) {
         LinkedList<PathNode> result = new LinkedList<>();
         // reconstruct path from end to start
         PathNode current = end;
-        while(current.parent != null) { // do not include start
-            if(map[current.i][current.j].isTouchable())
+        while(current.parent != null) {
+            if(get(current.i, current.j).isTouchable())
                 result.add(current);
             current = current.parent;
         }
@@ -159,25 +155,17 @@ public class GameMap {
                 int next_i = n.i + k;
                 int next_j = n.j + l;
 
-                if(next_i < 0 || next_j < 0 || next_i >= map.length || next_j >= map[0].length) continue;
+                if(next_i < 0 || next_j < 0 || next_i >= height || next_j >= width) continue;
 
-                Step neighbor = map[next_i][next_j];
+                Tile neighbor = get(next_i, next_j);
 
-                if(neighbor != null && neighbor.isStepable())
+                if(neighbor.isStepable())
                     neighbors.add(new PathNode(neighbor.centerX(), neighbor.centerY(), next_i, next_j));
             }
         }
 
         return neighbors;
 
-    }
-
-    public void dispose() {
-        for(Step[] line: map) {
-            for (Step s: line) {
-                if(s != null) { s.texture.recycle(); s.setEmpty(); }
-            }
-        }
     }
 
 }

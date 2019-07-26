@@ -3,12 +3,15 @@ package com.kmortyk.canekoandthechessking.game.creatures;
 import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 
+import com.kmortyk.canekoandthechessking.game.effects.PopUpText;
 import com.kmortyk.canekoandthechessking.resources.GameResources;
 import com.kmortyk.canekoandthechessking.game.GameWorld;
-import com.kmortyk.canekoandthechessking.game.math.Vector2;
+import com.kmortyk.canekoandthechessking.util.MovingPath;
+import com.kmortyk.canekoandthechessking.util.Vector2;
 import com.kmortyk.canekoandthechessking.game.object.GameObject;
 import com.kmortyk.canekoandthechessking.game.object.PathNode;
-import com.kmortyk.canekoandthechessking.game.steps.Step;
+import com.kmortyk.canekoandthechessking.game.tiles.Tile;
+import com.kmortyk.canekoandthechessking.resources.ResourceManager;
 
 import java.util.LinkedList;
 
@@ -20,13 +23,16 @@ public abstract class Creature extends GameObject {
 
     public PathNode node;
     private boolean isArrived;
+    private MovingPath movingPath;
 
-    private final static float movingSpeed = 0.16f;
-    private final static float err = 3f;
+    // private final static float movingSpeed = 150f * ResourceManager.getInstance().density();
 
     public Creature(GameWorld gameWorld, int i, int j, Bitmap texture) {
         super(texture);
         this.gameWorld = gameWorld;
+
+        int prc = (int) ResourceManager.pxFromDp(3.3333f);
+        movingPath = new MovingPath(prc);
 
         path = new LinkedList<>();
         traveledPath = new LinkedList<>();
@@ -44,9 +50,10 @@ public abstract class Creature extends GameObject {
 
         // centering
         pos.x -= (getWidth() - GameResources.getStepWidth()) / 2;
-        pos.y -= (getHeight() - GameResources.getStepHeight());
+        pos.y -= (getHeight() - GameResources.getStepHeight()) / 2 + getHeight()/2;
 
         node = new PathNode(centerX(), bottomY(), i, j);
+        traveledPath.add(node);
 
         setArrived(true);
 
@@ -61,33 +68,28 @@ public abstract class Creature extends GameObject {
             } else { return; }
         }
 
-        updatePos(delta);
+        updatePos();
 
     }
 
-    private void updatePos(float delta) {
+    private void updatePos() {
 
-        int speed = (int) (movingSpeed * delta);
+        if(!movingPath.hasPath()) { movingPath.createPath(pos.x, pos.y, node.x - getWidth()*0.5f, node.y - getHeight()); }
+        else{
 
-        float cx = centerX();
-        float cy = bottomY();
+             if(movingPath.hasNext()) { pos.set(movingPath.next()); }
+             else{ // no points anymore
 
-        if(cx < node.x) this.pos.x += speed * 2;
-        if(cx > node.x) this.pos.x -= speed * 2;
+                pos.set(movingPath.getLast());
+                movingPath.clear();
 
-        if(cy < node.y) this.pos.y += speed;
-        if(cy > node.y) this.pos.y -= speed;
+                Tile tile = gameWorld.get(node.i, node.j);
+                tile.onStep(this);
 
-        // Log.d("Distance", Vector2.dst2(cx, cy, node.x, node.y) + "");
+                if(lastNode() && tile.hasCreature()) { onAttack(tile.getCreature()); }
+                onArrived();
 
-        if(Vector2.dst2(cx, cy, node.x, node.y) < err*err) {
-
-            Step step = gameWorld.get(node.i, node.j);
-            step.onStep(this);
-
-            if(step.hasCreature()) { onAttack(step.getCreature()); }
-
-            onArrived();
+            }
 
         }
 
@@ -95,11 +97,13 @@ public abstract class Creature extends GameObject {
 
     public void addPathNode(PathNode node) { if(!this.node.equals(node)) path.add(node); }
 
-    public final void addPathNode(int i, int j) { addPathNode(new PathNode(gameWorld.get(i, j), i, j)); }
-
     public final void addAllPathNodes(LinkedList<PathNode> nodes) { for (PathNode node: nodes) addPathNode(node); }
 
-    protected void onAttack(Creature creature) { /* Override */ }
+    private boolean lastNode() { return path.size() == 0; }
+
+    protected void onAttack(Creature creature) {
+        PopUpText.addTo(gameWorld, creature.pos.x, creature.pos.y, "Attack...");
+    }
 
     protected void onArrived() {
         gameWorld.move(this, traveledPath.peekLast(), node);

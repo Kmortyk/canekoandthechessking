@@ -2,7 +2,7 @@ package com.kmortyk.canekoandthechessking.game.object;
 
 import android.support.annotation.NonNull;
 
-import com.kmortyk.canekoandthechessking.game.steps.Step;
+import com.kmortyk.canekoandthechessking.game.tiles.Tile;
 
 public class PathNode {
 
@@ -14,9 +14,9 @@ public class PathNode {
     public int cost = 1;
     public PathNode parent = null;
 
-    public PathNode(@NonNull Step step, int i, int j) {
-        x = step.centerX();
-        y = step.centerY();
+    public PathNode(@NonNull Tile tile, int i, int j) {
+        x = tile.centerX();
+        y = tile.centerY();
         this.i = i;
         this.j = j;
     }

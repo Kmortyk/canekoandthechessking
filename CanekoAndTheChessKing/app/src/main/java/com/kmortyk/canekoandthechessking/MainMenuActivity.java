@@ -1,24 +1,22 @@
 package com.kmortyk.canekoandthechessking;
 
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Button;
 
 import com.kmortyk.canekoandthechessking.menu.MenuButton;
 import com.kmortyk.canekoandthechessking.resources.ResourceManager;
 import com.kmortyk.canekoandthechessking.scores.ScoresActivity;
-import com.kmortyk.canekoandthechessking.scores.database.Scores;
+import com.kmortyk.canekoandthechessking.database.Scores;
 
 public class MainMenuActivity extends AppCompatActivity {
 
-    final private static boolean DEBUG_MODE = true;
+    private final static boolean DEBUG_MODE = true;
 
-    MenuButton start, scores;
+    private MenuButton start, scores;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,15 +30,12 @@ public class MainMenuActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_main_menu);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        // setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         ResourceManager.Initialize(getApplicationContext());
         Scores.Initialize(getApplicationContext());
 
         if(DEBUG_MODE) {
-            //Intent intent = new Intent(MainMenuActivity.this, MapActivity.class);
-            //startActivity(intent);
-
-            startLevel("map1");
+            startLevel("gr1m0");
         }
 
         start = new MenuButton(findViewById(R.id.start_textView), () -> {
@@ -53,16 +48,6 @@ public class MainMenuActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        Button button = new Button(this);
-
-        /*MenuButton credits = new MenuButton(findViewById(R.id.credits_textView), () -> {
-            @Override
-            public void run() {
-                Toast.makeText(MainMenuActivity.this, "Credits", Toast.LENGTH_SHORT).show();
-            }
-        });*/
-
-
     }
 
     @Override
@@ -70,6 +55,19 @@ public class MainMenuActivity extends AppCompatActivity {
         super.onPause();
         start.fadeIn();
         scores.fadeIn();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        System.runFinalization();
+        Runtime.getRuntime().gc();
+        System.gc();
+    }
+
+    public void openMap() {
+        Intent intent = new Intent(MainMenuActivity.this, MapActivity.class);
+        startActivity(intent);
     }
 
     public void startLevel(String level) {

@@ -1,12 +1,12 @@
 package com.kmortyk.canekoandthechessking.game.effects;
 
 import android.graphics.Canvas;
-import com.kmortyk.canekoandthechessking.game.math.Vector2;
+import com.kmortyk.canekoandthechessking.util.Vector2;
 import com.kmortyk.canekoandthechessking.game.object.GameObject;
 
 public class JumpOnSpot extends Effect {
 
-    private static final float jumpSpeed = 0.4f;
+    private static final float jumpSpeed = 400f;
 
     private GameObject gameObject;
 

@@ -9,10 +9,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.kmortyk.canekoandthechessking.R;
-import com.kmortyk.canekoandthechessking.scores.database.Scores;
+import com.kmortyk.canekoandthechessking.database.Scores;
 
 import java.util.List;
 
+// TODO remove class =333
 public class ScoreViewAdapter extends RecyclerView.Adapter<ScoreViewAdapter.ViewHolder> {
 
     private List<Scores.ScoreEntry> data;

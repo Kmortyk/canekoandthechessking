@@ -1,36 +1,87 @@
 package com.kmortyk.canekoandthechessking.game.item;
 
 import android.graphics.Bitmap;
+import android.support.annotation.NonNull;
 
-import com.kmortyk.canekoandthechessking.game.math.Vector2;
+import com.kmortyk.canekoandthechessking.game.decoration.Decoration;
+import com.kmortyk.canekoandthechessking.game.command.Command;
+import com.kmortyk.canekoandthechessking.util.Vector2;
 import com.kmortyk.canekoandthechessking.game.object.GameObject;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class GameItem extends GameObject {
 
-    private int i, j;
+    public static final String TYPE_STANDARD = "none";
 
-    public GameItem(Vector2 pos, Bitmap texture) { super(pos, texture); }
+    public static final int STACKABLE = 2;
+    public static final int USABLE = 4;
 
-    public GameItem(Bitmap texture) { super(texture); }
+    public String fullTextureName;
 
-    private GameItem(GameItem gameItem) {
-        super(gameItem.texture);
-        i = j = 0;
+    private int count = 1;
+    private String name = TYPE_STANDARD;
+    private String type = TYPE_STANDARD;
+
+    private int flags;
+
+    private List<Command> commands;
+
+    public GameItem(int flags, @NonNull Bitmap texture, int i, int j) {
+        super(new Vector2(), texture);
+        moveTo(i, j);
+        this.flags = flags;
+        commands = new ArrayList<>();
     }
 
-    public GameItem toInterfaceItem(int i, int j) {
-        GameItem interfaceItem = new GameItem(this);
-        interfaceItem.setInterfacePos(i, j);
-        return new GameItem(this);
+    /**
+     * Data constructor
+     */
+    public GameItem(int flags, Bitmap texture) {
+        super(texture);
+        this.flags = flags;
     }
 
-    private void setInterfacePos(int i, int j) {
-        this.i = i;
-        this.j = j;
+    public GameItem clone(int i, int j) { return new GameItem(flags, texture, i, j); }
+
+    /* --- use ----------------------------------------------------------------------------------- */
+
+    public void addCommand(Command ... command) { commands.addAll(Arrays.asList(command)); }
+
+    public void useOn(Decoration dec) {
+        for (Command command: commands) {
+            if(command.canBeExecuted(dec)) { command.execute(this, dec); }
+        }
     }
 
-    public int getI() { return i; }
+    // TODO abilities???
+    public void add(int count) { this.count += count; }
 
-    public int getJ() { return j; }
+    public int getCount() { return count; }
+
+    /* --- flags --------------------------------------------------------------------------------- */
+
+    public static int getFlags(boolean isStackable, boolean isUsable) {
+        int flags = 0;
+
+        if(isStackable) flags |= STACKABLE;
+        if(isUsable) flags |= USABLE;
+
+        return flags;
+    }
+
+    public boolean is(int flag) { return (flags & flag) != 0; }
+
+    /* ------------------------------------------------------------------------------------------- */
+
+    public void setName(String name) { this.name = name; }
+
+    public String getName() { return name; }
+
+    public void setType(String type) { this.type = type; }
+
+    public boolean equalsByName(GameItem it) { return name.equals((it).getName()); }
 
 }

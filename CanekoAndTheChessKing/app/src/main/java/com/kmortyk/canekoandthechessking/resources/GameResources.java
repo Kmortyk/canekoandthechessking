@@ -1,10 +1,17 @@
 package com.kmortyk.canekoandthechessking.resources;
 
+import android.content.Context;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.util.SparseArray;
 
+import com.kmortyk.canekoandthechessking.database.DataAdapter;
 import com.kmortyk.canekoandthechessking.game.GameWorld;
+import com.kmortyk.canekoandthechessking.game.decoration.Decoration;
+import com.kmortyk.canekoandthechessking.game.item.GameItem;
+import com.kmortyk.canekoandthechessking.game.command.BreakCommand;
 import com.kmortyk.canekoandthechessking.thread.GameThread;
 import com.kmortyk.canekoandthechessking.R;
 import com.kmortyk.canekoandthechessking.game.creatures.Bishop;
@@ -12,58 +19,46 @@ import com.kmortyk.canekoandthechessking.game.creatures.Enemy;
 import com.kmortyk.canekoandthechessking.game.creatures.Hero;
 import com.kmortyk.canekoandthechessking.game.creatures.Horse;
 import com.kmortyk.canekoandthechessking.game.creatures.Pawn;
-import com.kmortyk.canekoandthechessking.game.steps.ExitStep;
-import com.kmortyk.canekoandthechessking.game.steps.Step;
+import com.kmortyk.canekoandthechessking.game.tiles.ExitTile;
+import com.kmortyk.canekoandthechessking.game.tiles.Tile;
 
 public class GameResources {
 
-    private static final float decorationScaleFactor = 0.3f;
+    private static final float scaleFactor     = 0.3f;
     private static final float heroScaleFactor = 0.2f;
-    private static final float scaleFactor = 0.1f;
 
-    private GameThread gameThread;
+    private static final Bitmap tileTexture = ResourceManager.getInstance().loadDrawable(R.drawable.tile, scaleFactor);
 
-    private SparseArray<Bitmap> bitmaps = new SparseArray<>();
-    private static final String[] maps = {"map1", "map2"};
-    private static int curMapIndex = 0;
+    private final GameThread gameThread;
+    private final SparseArray<Bitmap> bitmaps = new SparseArray<>();
 
-    private static final Bitmap stepTexture = ResourceManager.getInstance().loadDrawable(R.drawable.step, scaleFactor);
+    private final Tile err = new Tile(0, getDrawable(R.drawable.err, scaleFactor));
+    private final Decoration errDecoration = new Decoration(getDrawable(R.drawable.err, scaleFactor));
+    private final GameItem errItem = new GameItem(0, getDrawable(R.drawable.err, scaleFactor));
 
-    // 0 - main, steps
-    private Step emptyStep = new Step(Step.getFlags(false, false), getDrawable(R.drawable.empty, 1/ResourceManager.getInstance().density()));
-    private Step step  = new Step(Step.getFlags(true, true),  getDrawable(R.drawable.step, scaleFactor));
-    private Step pathH = new Step(Step.getFlags(true, false), getDrawable(R.drawable.path_h, scaleFactor));
-    private Step pathV = new Step(Step.getFlags(true, false), getDrawable(R.drawable.path_v, scaleFactor));
-    private Step pathExit;
+    private DataAdapter dbHelper;
 
-    // 200 - decorations
-    private Step plant      = new Step(0, getDrawable(R.drawable.plant, decorationScaleFactor));
-    private Step chessboard = new Step(0, getDrawable(R.drawable.chessboard2, decorationScaleFactor));
-    private Step jug = new Step(0, getDrawable(R.drawable.jug, decorationScaleFactor));
-    private Step table = new Step(0, getDrawable(R.drawable.table, decorationScaleFactor));
-
-    private Step err = new Step(0, getDrawable(R.drawable.err, decorationScaleFactor));
-
-    public GameResources(GameThread gameThread) {
+    public GameResources(Context context, GameThread gameThread) {
         this.gameThread = gameThread;
-        pathExit = new ExitStep(gameThread, Step.getFlags(true, true), getDrawable(R.drawable.exit, scaleFactor));
+
+        dbHelper = new DataAdapter(context);
+        dbHelper.createDatabase();
+        dbHelper.open();
     }
 
-    /* --- metrics ------------------------------------------------------------------------------- */
+    /* --- game metrics -------------------------------------------------------------------------- */
 
-    public static int getSectionWidth() { return stepTexture.getWidth() * 2; }
+    public static int getSectionWidth() { return tileTexture.getWidth()/2; }
 
-    public static int getSectionHeight() { return stepTexture.getHeight() * 4; }
+    public static int getSectionHeight() { return tileTexture.getHeight(); }
 
-    public static int getStepHeight() { return stepTexture.getHeight(); }
+    public static int getStepHeight() { return tileTexture.getHeight(); }
 
-    public static int getStepWidth() { return stepTexture.getWidth(); }
+    public static int getStepWidth() { return tileTexture.getWidth(); }
 
     /* --- get object ---------------------------------------------------------------------------- */
 
-    public Hero getHero(GameWorld gameWorld, int i, int j) {
-        return new Hero(gameThread, i, j, getDrawable(R.drawable.caneko, heroScaleFactor));
-    }
+    public Hero getHero(int i, int j) { return new Hero(gameThread, i, j, getDrawable(R.drawable.caneko, heroScaleFactor)); }
 
     public Enemy getEnemy(GameWorld gameWorld, String name, int i, int j) {
 
@@ -77,50 +72,132 @@ public class GameResources {
 
     }
 
+    public GameItem getItem(int id, int i, int j) {
+
+        Cursor c = dbHelper.getItemData(id);
+
+        if(c == null || !c.moveToFirst()) return errItem.clone(i, j);
+
+        String type             = c.getString(c.getColumnIndex("type"));
+        String drawableName     = c.getString(c.getColumnIndex("drawableName"));
+        String fullDrawableName = c.getString(c.getColumnIndex("fullDrawableName"));
+        String name = ResourceManager.getInstance().getString(drawableName);
+
+        boolean stackable  = c.getInt(c.getColumnIndex("stackable"))  > 0;
+        boolean usable     = c.getInt(c.getColumnIndex("usable"))     > 0;
+        boolean centering  = c.getInt(c.getColumnIndex("centering"))  > 0;
+
+        GameItem it = new GameItem(GameItem.getFlags(stackable, usable), getDrawable(drawableName, scaleFactor), i, j);
+        it.fullTextureName = fullDrawableName;
+        it.setName(name);
+        it.setType(type);
+
+        switch (type) {
+            case "hoe": it.addCommand(new BreakCommand());
+                break;
+        }
+
+        if(centering) { it.centerAtTile(); }
+
+        return it;
+
+    }
+
+    public Decoration getDecoration(int id, int i, int j) {
+
+        Cursor c = dbHelper.getDecorationData(id);
+
+        if(c == null || !c.moveToFirst()) { return errDecoration.clone(i, j); }
+
+        String type = c.getString(c.getColumnIndex("type"));
+        String drawableName = c.getString(c.getColumnIndex("drawableName"));
+
+        float height = c.getFloat(c.getColumnIndex("height"));
+              height *= getStepHeight();
+
+        boolean isStatic = c.getInt(c.getColumnIndex("static")) > 0;
+
+        Decoration d = new Decoration(getDrawable(drawableName, scaleFactor), i, j);
+        d.setStatic(isStatic);
+        if(!type.equals("wall")) { d.centerAtTile();  }
+        d.setHeight(height);
+
+        return d;
+
+    }
+
     @NonNull
-    public Step getStep(int id, int i, int j) {
+    public Tile getTile(int id, int i, int j) {
 
-        switch (id) {
+        Cursor c = dbHelper.getTileData(id);
 
-            case 0: return emptyStep;
-            // 0 - main, steps
-            case 1: return step.clone(i, j);
-            case 2: return pathH.clone(i, j);
-            case 3: return pathV.clone(i, j);
-            case 4: return pathExit.clone(i, j);
-            // 200 - decorations
-            case 204: return plant.clone(i, j, 0.5f, 0.3f);
-            case 205: return chessboard.clone(i, j, 0.25f, 0.0625f);
-            case 206: return jug.clone(i, j, 0.5f, 0.25f);
-            case 207: return table.clone(i, j, 0.25f, 0.0625f);
+        if(c == null || !c.moveToFirst()) { return err.clone(i, j); }
 
-            default: return err.clone(i, j);
+        String type = c.getString(c.getColumnIndex("type"));
+        String drawableName = c.getString(c.getColumnIndex("drawableName"));
+        String back = c.getString(c.getColumnIndex("back"));
 
+        if(drawableName.equals("empty")) {
+            return new Tile(0, getDrawable(R.drawable.empty, 1), ResourceManager.emptyBitmap, i, j);
+        }
+
+        Bitmap backTexture = ResourceManager.emptyBitmap;
+        if(back != null) { backTexture = getDrawable(back, scaleFactor); }
+
+        boolean stepable  = c.getInt(c.getColumnIndex("stepable"))  > 0;
+        boolean touchable = c.getInt(c.getColumnIndex("touchable")) > 0;
+
+        Bitmap texture = getDrawable(drawableName, scaleFactor);
+
+        if(texture == null) {
+            Log.d("GameResources", "no such drawableName.");
+            return err.clone(i, j);
+        }
+
+        c.close();
+
+        switch (type) {
+            case "tile": return new Tile(Tile.getFlags(stepable, touchable), texture, backTexture, i, j);
+            case "exit": return new ExitTile(gameThread, Tile.getFlags(stepable, touchable), texture, backTexture, i, j);
+            default:
+                Log.d("GameResources", "no such tile type.");
+                return err.clone(i, j);
         }
 
     }
 
-    /* --- map ----------------------------------------------------------------------------------- */
-
-    public String currentMap() { return maps[curMapIndex]; }
-
-    public String nextMap() {
-        curMapIndex = (curMapIndex + 1) % maps.length;
-        return currentMap();
-    }
-
-    public boolean isLastMap() { return  curMapIndex == maps.length - 1; }
-
     /* --- get resource -------------------------------------------------------------------------- */
+
+    public Bitmap getDrawable(String drawableName, float scaleFactor) {
+        int id = ResourceManager.getInstance().getResourceId(drawableName, "drawable");
+        if(id == 0) {
+            Log.e("GameResources", "#getDrawable id is 0.");
+            return ResourceManager.emptyBitmap;
+        }
+        return getDrawable(id, scaleFactor);
+    }
 
     public Bitmap getDrawable(int id, float scaleFactor) {
         Bitmap value = bitmaps.get(id);
-        if(value != null) { return value; }
+        if(value != null && !value.isRecycled()) { return value; }
         Bitmap btm = ResourceManager.getInstance().loadDrawable(id, scaleFactor);
         bitmaps.put(id, btm);
         return btm;
     }
 
-    public static String getHeroName() { return ResourceManager.getInstance().getString(R.string.hero_name); }
+    /* --- recycle ------------------------------------------------------------------------------- */
+
+    public void recycle() {
+        for(int i = 0; i < bitmaps.size(); i++) {
+            int key = bitmaps.keyAt(i);
+            Bitmap btm = bitmaps.get(key);
+            if(!btm.isRecycled()) {
+                btm.recycle();
+                bitmaps.put(key, null);
+            }
+        }
+        bitmaps.clear();
+        dbHelper.close();
+    }
 
 }

@@ -2,11 +2,9 @@ package com.kmortyk.canekoandthechessking.game.effects;
 
 import android.graphics.Canvas;
 
-import com.kmortyk.canekoandthechessking.game.GameWorld;
-import com.kmortyk.canekoandthechessking.game.math.Vector2;
+import com.kmortyk.canekoandthechessking.util.Vector2;
 
-import java.util.List;
-
+@SuppressWarnings("BooleanMethodIsAlwaysInverted")
 public abstract class Effect {
 
     /**
@@ -29,13 +27,8 @@ public abstract class Effect {
     /**
      * Will be called before the object link is destroyed.
      */
-    public void dispose() { if(callback != null) callback.run(); }
+    public void dispose() { if(callback != null) { callback.run(); } }
 
     public final void setCallback(Runnable callback) { this.callback = callback; }
 
-    public static void addTo(GameWorld gameWorld, float x, float y, String text)        { throw new RuntimeException("Stub!"); }
-
-    public static void uniqueAddTo(GameWorld gameWorld, float x, float y, String text)  { throw new RuntimeException("Stub!"); }
-
-    public static void uniqueAddTo(List<Effect> effects, float x, float y, String text) { throw new RuntimeException("Stub!"); }
 }

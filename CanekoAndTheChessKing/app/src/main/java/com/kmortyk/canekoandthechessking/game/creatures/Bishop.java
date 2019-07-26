@@ -12,7 +12,11 @@ public class Bishop extends Enemy  {
     public Bishop(GameWorld gameWorld, int i, int j, Bitmap texture) { super(gameWorld, i, j, texture); }
 
     @Override
-    public LinkedList<PathNode> allSteps() { return null; } // FIXME return null
+    public LinkedList<PathNode> allSteps() {
+        LinkedList<PathNode> nodes = new LinkedList<>();
+        nodes.add(node);
+        return nodes;
+    } // FIXME return null
 
     /*@Override
     public void nextStep() {

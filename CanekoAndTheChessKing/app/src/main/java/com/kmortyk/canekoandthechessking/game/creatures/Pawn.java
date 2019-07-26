@@ -15,12 +15,11 @@ public class Pawn extends Enemy {
         LinkedList<PathNode> nodes = new LinkedList<>();
 
         int i = node.i, j = node.j;
-        int steps = 1 + gameWorld.getSpaces();
 
-        checkNode(i+steps, j, nodes);
-        checkNode(i-steps, j, nodes);
-        checkNode(i, j+steps, nodes);
-        checkNode(i, j-steps, nodes);
+        checkNode(i+1, j, nodes);
+        checkNode(i-1, j, nodes);
+        checkNode(i, j+1, nodes);
+        checkNode(i, j-1, nodes);
 
         return nodes;
     }

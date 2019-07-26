@@ -92,14 +92,14 @@
             android:textSize="10pt" />
 
         <!--<TextView-->
-            <!--android:id="@+id/credits_textView"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
+        <!--android:id="@+id/credits_textView"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
 
-            <!--android:fontFamily="@font/sofiapro_light"-->
-            <!--android:text="@string/credits"-->
-            <!--android:textColor="@android:color/white"-->
-            <!--android:textSize="10pt" />-->
+        <!--android:fontFamily="@font/sofiapro_light"-->
+        <!--android:text="@string/credits"-->
+        <!--android:textColor="@android:color/white"-->
+        <!--android:textSize="10pt" />-->
 
     </LinearLayout>
 

@@ -6,11 +6,11 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Matrix;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.support.v4.content.res.ResourcesCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
@@ -21,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Created by user1 on 05.11.2018.
@@ -54,6 +55,12 @@ public class ResourceManager {
     /**
      * @return string from strings.xml
      */
+    public String getString(String name) {
+        int id = getResourceId(name, "string");
+        if(id == 0) return "???";
+        return getString(id);
+    }
+
     public String getString(int id) { return resources.getString(id); }
 
     /**
@@ -61,12 +68,14 @@ public class ResourceManager {
      */
     public float density() { return resources.getDisplayMetrics().density; }
 
-    public float pxFromDp(final float dp) {
-        return dp * ((float) resources.getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
+    public static float pxFromDp(final float dp) {
+        Resources res = getInstance().resources; // simplify using
+        return dp * ((float) res.getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
     }
 
-    public float dpFromPx(final float px) {
-        return px / ((float) resources.getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
+    public static float dpFromPx(final float px) {
+        Resources res = getInstance().resources;
+        return px / ((float) res.getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
     }
 
     /* --- fonts ----------------------------------------------------------------------------------*/
@@ -79,7 +88,7 @@ public class ResourceManager {
     /* --- drawable -------------------------------------------------------------------------------*/
 
     public Bitmap loadDrawable(String name) {
-        int id = getDrawableId(name);
+        int id = getResourceId(name, "drawable");
 
          if(id == 0)
              return BitmapFactory.decodeResource(resources, R.drawable.err);
@@ -87,15 +96,35 @@ public class ResourceManager {
         return BitmapFactory.decodeResource(resources, id);
     }
 
+    public static Bitmap emptyBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+
+    /**
+     * Returns the bitmap with the resource with the specified id.
+     * @param idPath id of resource, exm: R.drawable.grass
+     *
+     * @see GameResources#getDrawable(int id, float scaleFactor)
+     */
     public Bitmap loadDrawable(int idPath) { return loadDrawable(idPath, 1); }
 
     public Bitmap loadDrawable(int idPath, double scale) {
+        Drawable drawable = ResourcesCompat.getDrawable(resources, idPath, null);
+        if(drawable == null) return emptyBitmap;
+        return drawableToBitmap(drawable, (int) (drawable.getIntrinsicWidth() * scale), (int) (drawable.getIntrinsicHeight() * scale));
+    }
 
-        Drawable drawable = resources.getDrawable(idPath);
+    public Bitmap loadDrawable(int idPath, float width, float height) {
+        Drawable drawable = ResourcesCompat.getDrawable(resources, idPath, null);
+        if(drawable == null) return emptyBitmap;
+        return drawableToBitmap(drawable, width, height);
+    }
 
+    /**
+     * Convert drawable to bitmap.
+     */
+    private Bitmap drawableToBitmap(Drawable drawable, float width, float height) {
         if (drawable instanceof BitmapDrawable) {
             Bitmap bitmap = ((BitmapDrawable)drawable).getBitmap();
-            return getResizedBitmap(bitmap, (int) (bitmap.getWidth() * scale), (int) (bitmap.getHeight() * scale));
+            return Bitmap.createScaledBitmap(bitmap, (int) width, (int) height, false);
         }
 
         Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
@@ -103,25 +132,7 @@ public class ResourceManager {
         drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         drawable.draw(canvas);
 
-        return getResizedBitmap(bitmap, (int) (bitmap.getWidth() * scale), (int) (bitmap.getHeight() * scale));
-
-    }
-
-    /**
-     * Scale bitmap
-     * @return new scaled bitmap
-     */
-    public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
-        int width  = bm.getWidth();
-        int height = bm.getHeight();
-
-        float scaleWidth  = (float) newWidth  / width;
-        float scaleHeight = (float) newHeight / height;
-
-        Matrix matrix = new Matrix();
-        matrix.postScale(scaleWidth, scaleHeight);
-
-        return Bitmap.createBitmap(bm, 0, 0, width, height, matrix, false);
+        return Bitmap.createScaledBitmap(bitmap, (int) width, (int) height, false);
     }
 
     /**
@@ -144,7 +155,16 @@ public class ResourceManager {
 
     /* --- maps -----------------------------------------------------------------------------------*/
 
-    public ArrayList<MapObject> loadGameWorld(Bitmap map) {
+    public boolean mapExists(String mapName) {
+        try {
+            return Arrays.asList(resources.getAssets().list("maps")).contains(mapName);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public ArrayList<MapObject> loadGameWorld() {
 
         AssetManager assetManager = resources.getAssets();
         ArrayList<MapObject> world = new ArrayList<>();
@@ -183,6 +203,7 @@ public class ResourceManager {
 
         AssetManager assetManager = resources.getAssets();
         ParsedMap parsedMap = new ParsedMap();
+        parsedMap.mapName = mapName;
 
         try {
 
@@ -192,7 +213,6 @@ public class ResourceManager {
             String[] lines = s.split("\n");
 
             for (int i = 0; i < lines.length; i++) {
-
                 //remove non-printable unicode characters
                 //used for each line because it also replaces \n
                 String line = cleanString(lines[i]);
@@ -229,15 +249,38 @@ public class ResourceManager {
 
                     ArrayList<String[]> enemiesList = new ArrayList<>();
 
-                    while( ++i < lines.length && !(line = cleanString(lines[i])).equals("") ) {
-                            String[] parts = line.split(" ");
-                            // length = 3: name, i, j
-                            if (parts.length == 3) enemiesList.add(parts);
-                    }
+                    while( ++i < lines.length && !(line = cleanString(lines[i])).equals("") ) { parseLine(line, enemiesList); }
 
                     parsedMap.enemies = enemiesList.toArray(new String[enemiesList.size()][]);
-                    // continue;
+                    continue;
 
+                }
+
+                if(line.equals("d:")) {
+
+                    ArrayList<String[]> decorationsList = new ArrayList<>();
+
+                    while( ++i < lines.length && !(line = cleanString(lines[i])).equals("") ) { parseLine(line, decorationsList); }
+
+                    parsedMap.decorations = decorationsList.toArray(new String[decorationsList.size()][]);
+                    continue;
+
+                }
+
+                if(line.equals("i:")) {
+
+                    ArrayList<String[]> itemsList = new ArrayList<>();
+
+                    while( ++i < lines.length && !(line = cleanString(lines[i])).equals("") ) { parseLine(line, itemsList); }
+
+                    parsedMap.items = itemsList.toArray(new String[itemsList.size()][]);
+                    continue;
+
+                }
+
+                if(line.equals("param:")) {
+                    while( ++i < lines.length && !(line = cleanString(lines[i])).equals("") ) { parseParam(line, parsedMap); }
+                    // continue;
                 }
 
             }
@@ -252,13 +295,39 @@ public class ResourceManager {
         return parsedMap;
     }
 
+    private void parseParam(String line, ParsedMap map) {
+        if(line.charAt(0) == '#') return;
+        String[] parts = line.split(" ");
+        switch (parts[0]) {
+            case "hero":
+                if(parts.length == 3) {
+                    map.heroI = Integer.valueOf(parts[1]);
+                    map.heroJ = Integer.valueOf(parts[2]);
+                }
+                break;
+            case "back": if(parts.length == 2) { map.backType = parts[1]; }
+                break;
+            case "next": if(parts.length == 2) { map.nextMap = parts[1]; }
+                break;
+            default: Log.d("ResourceManager",
+                          "loadMapFromAssets: no such param in file \"" + map.mapName + "\" (param:" + parts[0] + ")");
+        }
+    }
+
+    private void parseLine(String line, ArrayList<String[]> to) {
+        if(line.charAt(0) == '#') return;
+        String[] parts = line.split(" ");
+        // length = 3: name, i, j
+        if (parts.length == 3) to.add(parts);
+    }
+
     /* --- utils ----------------------------------------------------------------------------------*/
 
     /**
      * @param name resource name
      * @return ~R.id or 0 if error
      */
-    private int getDrawableId(String name) { return resources.getIdentifier(name, "drawable", packageName); }
+    public int getResourceId(String name, String defType) { return resources.getIdentifier(name, defType, packageName); }
 
     /**
      * Removes non-printable characters (including '\n')

@@ -1,13 +1,13 @@
 package com.kmortyk.canekoandthechessking;
 
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
 
 import com.kmortyk.canekoandthechessking.thread.GameThread;
 
@@ -35,6 +35,7 @@ public class GameActivity extends AppCompatActivity {
         gameThread = new GameThread(this, level);
         appView = new AppView(this, gameThread);
         setContentView(appView);
+
     }
 
     /*@Override
@@ -48,10 +49,29 @@ public class GameActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        gameThread.setRun(false);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        String level = getIntent().getStringExtra("level");
+        gameThread = new GameThread(this, level);
+        appView.setDrawThread(gameThread);
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         ViewGroup vg = (ViewGroup)(appView.getParent());
         if(vg !=  null) { vg.removeView(appView); }
-        appView = null;
+        gameThread.dispose();
+
+        System.runFinalization();
+        Runtime.getRuntime().gc();
+        System.gc();
     }
+
 }

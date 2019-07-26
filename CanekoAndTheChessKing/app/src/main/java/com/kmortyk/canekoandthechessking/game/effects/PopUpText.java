@@ -6,7 +6,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 
 import com.kmortyk.canekoandthechessking.game.GameWorld;
-import com.kmortyk.canekoandthechessking.game.math.Vector2;
+import com.kmortyk.canekoandthechessking.util.Vector2;
 import com.kmortyk.canekoandthechessking.resources.ResourceManager;
 
 import java.util.List;
@@ -22,15 +22,15 @@ public class PopUpText extends Effect {
     private final static float round = 30;
 
     // fade alpha
-    private final static float alphaSpeed = 0.04f;
+    private final static float alphaSpeed = 40f;
     private float alphaLevel = 255;
 
     // vertical moving
-    private final static float heightSpeed = 0.01f;
+    private final static float heightSpeed = 10f;
     private float heightOffset = 0;
 
     // time before fade
-    private final static float maxDelay = 4_000;
+    private final static float maxDelay = 4;
     private float deltaDelay = 0;
 
     public PopUpText(float x, float y, String text) {
@@ -40,7 +40,7 @@ public class PopUpText extends Effect {
 
         paint = new Paint();
         paint.setTextAlign(Paint.Align.CENTER);
-        paint.setTextSize(13*ResourceManager.getInstance().density());
+        paint.setTextSize(ResourceManager.pxFromDp(13));
 
         init(x, y);
     }

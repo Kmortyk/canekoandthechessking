@@ -1,6 +1,6 @@
 package com.kmortyk.canekoandthechessking.game.object;
 
-import com.kmortyk.canekoandthechessking.game.math.Vector2;
+import com.kmortyk.canekoandthechessking.util.Vector2;
 import com.kmortyk.canekoandthechessking.resources.ResourceManager;
 
 public class MapObject extends GameObject {
